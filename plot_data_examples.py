@@ -14,16 +14,16 @@ id_hale = np.load('data/id_hale.npy', allow_pickle=True) #
 
 #For each type of phase, we will count the number of phases, and their durations seen in simple, complex, and N/A Hale class regions
 phase_durs_all = {'II':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'DI':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'ID':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'DD':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'IF':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'DF':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'FI':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'FD':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'FF':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'NA':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)],
-                  'All':[0,timedelta(seconds=0),timedelta(hours=0),timedelta(hours=0)]}
+                  'DI':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'ID':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'DD':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'IF':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'DF':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'FI':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'FD':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'FF':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'NA':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
+                  'All':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)]}
 
 #Loop over the HARPs and total up the phase information
 for h, harp in enumerate(harps):
