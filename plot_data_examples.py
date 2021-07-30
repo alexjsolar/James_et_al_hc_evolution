@@ -11,42 +11,45 @@ harps = np.load('data/harps.npy', allow_pickle=True) #HARP numbers
 t_phases = np.load('data/t_phases.npy', allow_pickle=True) #boundary times of phases in each HARP
 id_phases = np.load('data/id_phases.npy', allow_pickle=True) #ID code of phases in each HARP e.g. II, ID, DD, etc.
 id_hale = np.load('data/id_hale.npy', allow_pickle=True) #
+phase_durs = np.load('data/phase_durs.npy', allow_pickle=True).item()
 
-#For each type of phase, we will count the number of phases, and their durations seen in simple, complex, and N/A Hale class regions
-phase_durs_all = {'II':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'DI':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'ID':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'DD':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'IF':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'DF':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'FI':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'FD':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'FF':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'NA':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)],
-                  'All':[0,timedelta(hours=0),timedelta(hours=0),timedelta(hours=0)]}
+#CMEs per phase type in simple, complex, and no class regions
+phase_CMEs = {'II':[4,17,0],'DI':[3,3,0],'ID':[1,13,0],'DD':[2,8,0],'IF':[0,0,0],'DF':[0,0,0],
+              'FI':[0,0,0],'FD':[0,0,0],'FF':[0,0,0],'All':[10,41,0],'NA':[0,0,0]}
 
-#Loop over the HARPs and total up the phase information
-for h, harp in enumerate(harps):
-    durs = [t_phases[h][i+1]-t_phases[h][i] for i in range(len(t_phases[h])-1)] #durations of each phase in each HARP
+print('All regions:')
+for k, cmes in phase_CMEs.items():
+    phases = phase_durs[k][0]
+    durs = phase_durs[k][1:]
+    durs_tot, cmes_tot = sum(durs,timedelta()).total_seconds()/(3600), sum(cmes)
+    if durs_tot != 0.0:
+        cme_rate = cmes_tot / (durs_tot/100)
+        dur_avg = durs_tot/phases
+    else:
+        cme_rate = np.nan
+        dur_avg = np.nan
+    print(f'{k}: {phases} phases, {cmes_tot} CMEs, {durs_tot} hours = {cme_rate} CMEs per 100 hours, {dur_avg} hours per phase.')
 
-    for i, id in enumerate(id_phases[h]): #for each phase:
-        if i==0 or (i>0 and id != id_phases[i-1]): #count number of phases. Take the first and then increase the count when subsequent phase IDs don't match
-            phase_durs_all[id][0] += 1
-            phase_durs_all['All'][0] += 1
-        if id_hale[h][i] == 'A' or id_hale[h][i] == 'B': #simple region: alpha or beta
-            phase_durs_all[id][1] += durs[i]
-            phase_durs_all['All'][1] += durs[i]
-        elif 'G' in id_hale[h][i] or 'D' in id_hale[h][i]: #complex region: gamma or delta
-            phase_durs_all[id][2] += durs[i]
-            phase_durs_all['All'][2] += durs[i]
-        else:                                           #other e.g. no class
-            phase_durs_all[id][3] += durs[i]
-            phase_durs_all['All'][3] += durs[i]
+#Rates of CMEs when flux is Increasing or Decreasing, and hc is Increasing or Decreasing
+def cme_rate_combined (ids=['II','ID','IF']):
+    dur_total = (sum(phase_durs[ids[0]][1:],timedelta())+sum(phase_durs[ids[1]][1:],timedelta())+sum(phase_durs[ids[2]][1:],timedelta())).total_seconds()/(3600)
+    cmes_total = sum(phase_CMEs[ids[0]])+sum(phase_CMEs[ids[1]])+sum(phase_CMEs[ids[2]])
+    cme_rate = cmes_total/(dur_total/100)
+    return cme_rate
+print(f"CME rate during increasing flux vs decreasing flux = {cme_rate_combined(['II','ID','IF'])} vs {cme_rate_combined(['DI','DD','DF'])}")
+print(f"CME rate during increasing flux vs decreasing flux = {cme_rate_combined(['II','DI','FI'])} vs {cme_rate_combined(['ID','DD','FD'])}")
 
-print('Phase Type, Number of Phases, Duration in Simple Regions (Hours), Duration in Complex Regions (Hours), Duration Regions with no Hale class (Hours)')
-for k, v in phase_durs_all.items():
-    print(k, v[0], (v[1]).total_seconds()/3600, (v[2]).total_seconds()/3600, (v[3]).total_seconds()/3600)
-print('Note: I do not include "NA" data in the paper. These correspond to data gaps.')
+labels = ['Simple Regions:', 'Complex Regions:', 'No class Regions:']
+for r, label in enumerate(labels):
+    print(label)
+    for k, cmes in phase_CMEs.items():
+        dur = phase_durs[k][r+1].total_seconds()/3600
+        cme = cmes[r]
+        if dur != 0.0:
+            cme_rate = cme / (dur/100)
+        else:
+            cme_rate = np.nan
+        print(f'{k}: {cme} CMEs, {dur} hours = {cme_rate} CMEs per 100 hours')
 
 #--------------
 #Flux, critical height, and polarity separation vs time
@@ -62,37 +65,47 @@ id_phases = np.load('data/id_phases.npy', allow_pickle=True) #ID code of phases 
 
 harp = '3999'
 h = np.where(harps==harp)[0][0] #get index of desired HARP
-start_year = times[h][0].strftime('%Y') #year of first data point for chosen HARP
 
 fluxes_h = [flux[2] for flux in fluxes[h]] #0 for -ve, 1 for +ve, 2 for unsigned
 cmap = cm.get_cmap('plasma') #for colouring phases
 colours = {'II':[cmap(0.1)], 'DI':[cmap(0.5)], 'ID':[cmap(0.8)], 'DD':['black'],
            'IF':['none'], 'DF':['none'],'FI':['none'], 'FD':['none'], 'FF':['none'],'NA':['none']}
-#
-fig, ax = plt.subplots()
-ax.plot(times[h], fluxes_h)
-[ax.axvspan(t_phases[h][i], t_phases[h][i+1], alpha=0.2, color=colours[id_phases[h][i]][-1],zorder=-1,lw=0) for i in range(len(t_phases[h])-1)] #colour times of phases
+fig, ax1 = plt.subplots()
+ax1.plot(times[h], fluxes_h, c='k')
+[ax1.axvspan(t_phases[h][i], t_phases[h][i+1], alpha=0.2, color=colours[id_phases[h][i]][-1],zorder=-1,lw=0) for i in range(len(t_phases[h])-1)] #colour times of phases
 for t_cme in t_cmes[h]:
     if t_cme!='': #if cme time is not blank i.e. there were CMEs
-        ax.axvline(datetime.strptime(t_cme,'%Y.%m.%dT%H:%M'), linestyle='-', color='k') #draw vertical lines at CME times
-plt.xlabel(f'Time ({start_year})')
-plt.ylabel('Magnetic Flux (Mm)')
+        ax1.axvline(datetime.strptime(t_cme,'%Y.%m.%dT%H:%M'), linestyle='-', color='k') #draw vertical lines at CME times
+start_year = times[h][0].strftime('%Y') #year of first data point for chosen HARP
+ax1.set_xlabel(f'Time ({start_year})')
+ax1.set_ylabel('Magnetic Flux (Mx)')
+ax1b = ax1.twinx()
+ax1b.plot(times[h], heights[h], zorder=3, linestyle='dashed')
+ax1b.yaxis.set_label_position("right")
+ax1b.yaxis.tick_right()
+ax1b.set_ylabel('Critical Height (Mm)',color='C0')
 plt.title(f'HARP {harps[h]}')
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b')) #major ticks labelled day-month
 plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
 plt.show()
 
-plt.plot(times[h], heights[h])
-plt.xlabel(f'Time ({start_year})')
-plt.ylabel('Critical Height (Mm)')
-plt.title(f'HARP {harps[h]}')
-plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b')) #major ticks labelled day-month
-plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
-plt.show()
-
-plt.plot(times[h], seps[h])
-plt.xlabel(f'Time ({start_year})')
-plt.ylabel('Polarity Separation (Mm)')
+fig, ax1 = plt.subplots()
+ax1.plot(times[h], heights[h], linestyle='dashed')
+start_year = times[h][0].strftime('%Y') #year of first data point for chosen HARP
+ax1.set_xlabel(f'Time ({start_year})')
+ax1.set_ylabel('Critical Height (Mm)',color='C0')
+ax1b = ax1.twinx()
+ax1b.plot(times[h], seps[h], c='orange', linestyle='dotted')
+ax1b.yaxis.set_label_position("right")
+ax1b.yaxis.tick_right()
+ax1b.set_ylabel(r'$\frac{1}{2}$ Polarity Separation (Mm)', color='orange')
+sepmin, hmin = np.nanmin(seps[h]), np.nanmin(heights[h]) #cant do nanmin on Quantities. Only Values.
+sepmax, hmax = np.nanmax(seps[h]), np.nanmax(heights[h])
+ymin, ymax = np.nanmin([sepmin,hmin]), np.nanmax([sepmax,hmax]) #take min and max of separations and heights
+ax1.set_ylim(ymin*0.95,ymax*1.05)  #twin y axes have same limits. add 5% whitespace
+ax1.set_ylim(ymin*0.95,ymax*1.05) #twin y axes have same limits. add 5% whitespace
+ax1b.set_ylim(ymin*0.95,ymax*1.05)  #twin y axes have same limits. add 5% whitespace
+ax1b.set_ylim(ymin*0.95,ymax*1.05) #twin y axes have same limits. add 5% whitespace
 plt.title(f'HARP {harps[h]}')
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b')) #major ticks labelled day-month
 plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
