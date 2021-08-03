@@ -10,8 +10,8 @@ import matplotlib.dates as mdates
 harps = np.load('data/harps.npy', allow_pickle=True) #HARP numbers
 t_phases = np.load('data/t_phases.npy', allow_pickle=True) #boundary times of phases in each HARP
 id_phases = np.load('data/id_phases.npy', allow_pickle=True) #ID code of phases in each HARP e.g. II, ID, DD, etc.
-id_hale = np.load('data/id_hale.npy', allow_pickle=True) #
-phase_durs = np.load('data/phase_durs.npy', allow_pickle=True).item()
+id_hale = np.load('data/id_hale.npy', allow_pickle=True) #ID code of Hale classes in each HARP e.g. A (alpha), BG (beta-gamma), etc.
+phase_durs = np.load('data/phase_durs.npy', allow_pickle=True).item() #total durations each phase type is observed for across all HARPs
 
 #CMEs per phase type in simple, complex, and no class regions
 phase_CMEs = {'II':[4,17,0],'DI':[3,3,0],'ID':[1,13,0],'DD':[2,8,0],'IF':[0,0,0],'DF':[0,0,0],
@@ -63,13 +63,13 @@ t_cmes = np.load('data/t_cmes.npy', allow_pickle=True) #times of CMEs in each HA
 t_phases = np.load('data/t_phases.npy', allow_pickle=True) #boundary times of phases in each HARP
 id_phases = np.load('data/id_phases.npy', allow_pickle=True) #ID code of phases in each HARP e.g. II, ID, DD, etc.
 
-harp = '3999'
+harp = '3999' #specify which HARP to plot for
 h = np.where(harps==harp)[0][0] #get index of desired HARP
 
 fluxes_h = [flux[2] for flux in fluxes[h]] #0 for -ve, 1 for +ve, 2 for unsigned
 cmap = cm.get_cmap('plasma') #for colouring phases
-colours = {'II':[cmap(0.1)], 'DI':[cmap(0.5)], 'ID':[cmap(0.8)], 'DD':['black'],
-           'IF':['none'], 'DF':['none'],'FI':['none'], 'FD':['none'], 'FF':['none'],'NA':['none']}
+colours = {'II':[cmap(0.1)], 'DI':[cmap(0.4)], 'ID':[cmap(0.7)], 'DD':[cmap(1.0)],
+           'IF':['black'], 'DF':['black'],'FI':['black'], 'FD':['black'], 'FF':['black'],'NA':['none']}
 fig, ax1 = plt.subplots()
 ax1.plot(times[h], fluxes_h, c='k')
 [ax1.axvspan(t_phases[h][i], t_phases[h][i+1], alpha=0.2, color=colours[id_phases[h][i]][-1],zorder=-1,lw=0) for i in range(len(t_phases[h])-1)] #colour times of phases
@@ -80,7 +80,7 @@ start_year = times[h][0].strftime('%Y') #year of first data point for chosen HAR
 ax1.set_xlabel(f'Time ({start_year})')
 ax1.set_ylabel('Magnetic Flux (Mx)')
 ax1b = ax1.twinx()
-ax1b.plot(times[h], heights[h], zorder=3, linestyle='dashed')
+ax1b.plot(times[h], heights[h], zorder=3, linestyle='dashed') #critical height vs time
 ax1b.yaxis.set_label_position("right")
 ax1b.yaxis.tick_right()
 ax1b.set_ylabel('Critical Height (Mm)',color='C0')
@@ -90,22 +90,20 @@ plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
 plt.show()
 
 fig, ax1 = plt.subplots()
-ax1.plot(times[h], heights[h], linestyle='dashed')
+ax1.plot(times[h], heights[h], linestyle='dashed') #critical height vs time
 start_year = times[h][0].strftime('%Y') #year of first data point for chosen HARP
 ax1.set_xlabel(f'Time ({start_year})')
 ax1.set_ylabel('Critical Height (Mm)',color='C0')
 ax1b = ax1.twinx()
-ax1b.plot(times[h], seps[h], c='orange', linestyle='dotted')
+ax1b.plot(times[h], seps[h], c='orange', linestyle='dotted') #half polarity separation vs time
 ax1b.yaxis.set_label_position("right")
 ax1b.yaxis.tick_right()
 ax1b.set_ylabel(r'$\frac{1}{2}$ Polarity Separation (Mm)', color='orange')
-sepmin, hmin = np.nanmin(seps[h]), np.nanmin(heights[h]) #cant do nanmin on Quantities. Only Values.
-sepmax, hmax = np.nanmax(seps[h]), np.nanmax(heights[h])
+sepmin, hmin = np.nanmin(seps[h]), np.nanmin(heights[h]) #minimum value between d and hc
+sepmax, hmax = np.nanmax(seps[h]), np.nanmax(heights[h]) #maximum value between d and hc
 ymin, ymax = np.nanmin([sepmin,hmin]), np.nanmax([sepmax,hmax]) #take min and max of separations and heights
-ax1.set_ylim(ymin*0.95,ymax*1.05)  #twin y axes have same limits. add 5% whitespace
-ax1.set_ylim(ymin*0.95,ymax*1.05) #twin y axes have same limits. add 5% whitespace
-ax1b.set_ylim(ymin*0.95,ymax*1.05)  #twin y axes have same limits. add 5% whitespace
-ax1b.set_ylim(ymin*0.95,ymax*1.05) #twin y axes have same limits. add 5% whitespace
+ax1.set_ylim(ymin*0.95,ymax*1.05)  #y axes have same limits. add 5% whitespace
+ax1b.set_ylim(ymin*0.95,ymax*1.05) #y axes have same limits. add 5% whitespace
 plt.title(f'HARP {harps[h]}')
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b')) #major ticks labelled day-month
 plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
@@ -121,8 +119,8 @@ def round_down(num, divisor):
 def round_up(num, divisor):
     return num + (divisor-(num%divisor))
 
-bin_width = 10
-bin_min, bin_max = round_down(min(cme_hc),bin_width), round_up(max(cme_hc),bin_width)
+bin_width = 10 #width of bins in Mm
+bin_min, bin_max = round_down(min(cme_hc),bin_width), round_up(max(cme_hc),bin_width) #define bins from min/max of data and bin width
 bins = np.arange(bin_min,bin_max+bin_width, bin_width)
 hist = plt.hist(cme_hc, bins, histtype='bar', rwidth=0.8)
 plt.xticks(bins)
