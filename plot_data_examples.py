@@ -1,6 +1,7 @@
 import numpy as np
 from datetime import timedelta
 from matplotlib import pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import matplotlib.cm as cm
 from datetime import datetime
 import matplotlib.dates as mdates
@@ -14,8 +15,8 @@ id_hale = np.load('data/id_hale.npy', allow_pickle=True) #ID code of Hale classe
 phase_durs = np.load('data/phase_durs.npy', allow_pickle=True).item() #total durations each phase type is observed for across all HARPs
 
 #CMEs per phase type in simple, complex, and no class regions
-phase_CMEs = {'II':[4,17,0],'DI':[3,3,0],'ID':[1,13,0],'DD':[2,8,0],'IF':[0,0,0],'DF':[0,0,0],
-              'FI':[0,0,0],'FD':[0,0,0],'FF':[0,0,0],'All':[10,41,0],'NA':[0,0,0]}
+phase_CMEs = {'II':[4,17,0],'DI':[2,3,0],'ID':[1,13,0],'DD':[1,8,0],'IF':[0,0,0],'DF':[0,0,0],
+              'FI':[0,0,0],'FD':[0,0,0],'FF':[0,0,0],'All':[8,41,0],'NA':[0,0,0]}
 
 print('All regions:')
 for k, cmes in phase_CMEs.items():
@@ -122,12 +123,19 @@ def round_up(num, divisor):
 bin_width = 10 #width of bins in Mm
 bin_min, bin_max = round_down(min(cme_hc),bin_width), round_up(max(cme_hc),bin_width) #define bins from min/max of data and bin width
 bins = np.arange(bin_min,bin_max+bin_width, bin_width)
-hist = plt.hist(cme_hc, bins, histtype='bar', rwidth=0.8)
+ax = plt.figure().gca()
+hist = ax.hist(cme_hc, bins, histtype='bar', rwidth=0.8)
 plt.xticks(bins)
+yt = 5 #intervals for y ticks
+plt.yticks(np.arange(0, max(hist[0]+yt), yt))
 plt.xlabel('Critical Height (Mm)')
 plt.ylabel('Number of CMEs')
 plt.title('Critical Height at CME Onset')
 plt.show()
+
+print(f'Mean = {np.mean(cme_hc)} +/- {np.std(cme_hc)} Mm')
+print(f'Median = {np.median(cme_hc)} Mm')
+print(f'Min and Max = {np.min(cme_hc)}, {np.max(cme_hc)} Mm')
 
 #--------------
 #Mean critical height vs polarity separation
@@ -155,8 +163,8 @@ err_all = [np.sqrt(V_all[0][0]), np.sqrt(V_all[1][1])] #error in slope and offse
 fit_slope_all = f'slope = {round(p_all[0],2):.2f} $\pm$ {round(err_all[0],2):.2f}' #slope and error
 ax.plot(np.unique(x_all), np.poly1d(np.polyfit(x_all, y_all, 1))(np.unique(x_all)), c='k', linestyle='--', label=fit_slope_all) #plot fit
 #
-ax.set_xlabel('d (Mm)')
-ax.set_ylabel('$\mathdefault{h_c}$ (Mm)')
+ax.set_xlabel(r'$\overline{d}$ (Mm)')
+ax.set_ylabel(r'$\overline{h_{\mathdefault{c}}}$ (Mm)')
 ax.legend()
 plt.show()
 print(f'{fit_slope_bp}, offset = {round(p_bp[1],2)} $\pm$ {round(err_bp[1],2)}') #slope and error, y-offset and error
