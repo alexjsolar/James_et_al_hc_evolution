@@ -2,7 +2,7 @@ import numpy as np
 from datetime import timedelta
 from matplotlib import pyplot as plt
 from matplotlib.ticker import MaxNLocator
-import matplotlib.cm as cm
+# import matplotlib.cm as cm
 from datetime import datetime
 import matplotlib.dates as mdates
 
@@ -68,12 +68,11 @@ harp = '3999' #specify which HARP to plot for
 h = np.where(harps==harp)[0][0] #get index of desired HARP
 
 fluxes_h = [flux[2] for flux in fluxes[h]] #0 for -ve, 1 for +ve, 2 for unsigned
-cmap = cm.get_cmap('plasma') #for colouring phases
-colours = {'II':[cmap(0.1)], 'DI':[cmap(0.4)], 'ID':[cmap(0.7)], 'DD':[cmap(1.0)],
-           'IF':['black'], 'DF':['black'],'FI':['black'], 'FD':['black'], 'FF':['black'],'NA':['none']}
-fig, ax1 = plt.subplots()
+colours = {'II':['#D9CCEB'], 'DI':['#F4DAE4'], 'ID':['#FCE6DB'], 'DD':['#FEEDD5'],
+           'IF':['lightgrey'], 'DF':['lightgrey'],'FI':['lightgrey'], 'FD':['lightgrey'], 'FF':['lightgrey'],'NA':['none']}
+fig, ax1 = plt.subplots()#figsize=(7,4))
 ax1.plot(times[h], fluxes_h, c='k')
-[ax1.axvspan(t_phases[h][i], t_phases[h][i+1], alpha=0.2, color=colours[id_phases[h][i]][-1],zorder=-1,lw=0) for i in range(len(t_phases[h])-1)] #colour times of phases
+[ax1.axvspan(t_phases[h][i], t_phases[h][i+1], alpha=1.0, color=colours[id_phases[h][i]][-1],zorder=-1,lw=0) for i in range(len(t_phases[h])-1)] #colour times of phases
 for t_cme in t_cmes[h]:
     if t_cme!='': #if cme time is not blank i.e. there were CMEs
         ax1.axvline(datetime.strptime(t_cme,'%Y.%m.%dT%H:%M'), linestyle='-', color='k') #draw vertical lines at CME times
@@ -88,9 +87,10 @@ ax1b.set_ylabel('Critical Height (Mm)',color='C0')
 plt.title(f'HARP {harps[h]}')
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b')) #major ticks labelled day-month
 plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
+plt.savefig(f'figures/F_hc_vs_t_{harp}.eps', dpi=300, bbox_inches='tight', format='eps')
 plt.show()
 
-fig, ax1 = plt.subplots()
+fig, ax1 = plt.subplots()#figsize=(7,4))
 ax1.plot(times[h], heights[h], linestyle='dashed') #critical height vs time
 start_year = times[h][0].strftime('%Y') #year of first data point for chosen HARP
 ax1.set_xlabel(f'Time ({start_year})')
@@ -108,6 +108,7 @@ ax1b.set_ylim(ymin*0.95,ymax*1.05) #y axes have same limits. add 5% whitespace
 plt.title(f'HARP {harps[h]}')
 plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%d-%b')) #major ticks labelled day-month
 plt.gca().xaxis.set_major_locator(mdates.DayLocator())  #major ticks at new days
+plt.savefig(f'figures/d_hc_vs_t_{harp}.eps', dpi=300, bbox_inches='tight', format='eps')
 plt.show()
 
 #--------------
@@ -131,6 +132,7 @@ plt.yticks(np.arange(0, max(hist[0]+yt), yt))
 plt.xlabel('Critical Height (Mm)')
 plt.ylabel('Number of CMEs')
 plt.title('Critical Height at CME Onset')
+plt.savefig('figures/hc_onset_histogram.eps', dpi=300, bbox_inches='tight', format='eps')
 plt.show()
 
 print(f'Mean = {np.mean(cme_hc)} +/- {np.std(cme_hc)} Mm')
@@ -166,6 +168,7 @@ ax.plot(np.unique(x_all), np.poly1d(np.polyfit(x_all, y_all, 1))(np.unique(x_all
 ax.set_xlabel(r'$\overline{d}$ (Mm)')
 ax.set_ylabel(r'$\overline{h_{\mathdefault{c}}}$ (Mm)')
 ax.legend()
+plt.savefig('figures/hc_vs_d.eps', dpi=300, bbox_inches='tight', format='eps')
 plt.show()
 print(f'{fit_slope_bp}, offset = {round(p_bp[1],2)} $\pm$ {round(err_bp[1],2)}') #slope and error, y-offset and error
 print(f'{fit_slope_all}, offset = {round(p_all[1],2)} $\pm$ {round(err_all[1],2)}') #slope and error, y-offset and error
