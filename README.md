@@ -1,2 +1,2 @@
-# James_et_al_2021
+# James_et_al_2022
 Public code and data for paper
