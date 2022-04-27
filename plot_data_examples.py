@@ -15,8 +15,10 @@ id_hale = np.load('data/id_hale.npy', allow_pickle=True) #ID code of Hale classe
 phase_durs = np.load('data/phase_durs.npy', allow_pickle=True).item() #total durations each phase type is observed for across all HARPs
 
 #CMEs per phase type in simple, complex, and no class regions
-phase_CMEs = {'II':[4,17,0],'DI':[2,3,0],'ID':[1,13,0],'DD':[1,8,0],'IF':[0,0,0],'DF':[0,0,0],
-              'FI':[0,0,0],'FD':[0,0,0],'FF':[0,0,0],'All':[8,41,0],'NA':[0,0,0]}
+phase_CMEs = {'II':[3,22,0],'DI':[2,7,0],'ID':[2,6,0],'DD':[1,4,0],'IF':[0,0,0],'DF':[0,0,0],
+              'FI':[0,0,0],'FD':[0,0,0],'FF':[0,0,0],'All':[8,39,0],'NA':[0,0,0]}
+# phase_CMEs = {'II':[2,8,0],'DI':[2,4,0],'ID':[2,2,0],'DD':[1,2,0],'IF':[0,0,0],'DF':[0,0,0],
+#               'FI':[0,0,0],'FD':[0,0,0],'FF':[0,0,0],'All':[7,16,0],'NA':[0,0,0]} #no saddles
 
 print('All regions:')
 for k, cmes in phase_CMEs.items():
@@ -38,7 +40,7 @@ def cme_rate_combined (ids=['II','ID','IF']):
     cme_rate = cmes_total/(dur_total/100)
     return cme_rate
 print(f"CME rate during increasing flux vs decreasing flux = {cme_rate_combined(['II','ID','IF'])} vs {cme_rate_combined(['DI','DD','DF'])}")
-print(f"CME rate during increasing flux vs decreasing flux = {cme_rate_combined(['II','DI','FI'])} vs {cme_rate_combined(['ID','DD','FD'])}")
+print(f"CME rate during increasing hcrit vs decreasing hcrit = {cme_rate_combined(['II','DI','FI'])} vs {cme_rate_combined(['ID','DD','FD'])}")
 
 labels = ['Simple Regions:', 'Complex Regions:', 'No class Regions:']
 for r, label in enumerate(labels):
@@ -64,7 +66,7 @@ t_cmes = np.load('data/t_cmes.npy', allow_pickle=True) #times of CMEs in each HA
 t_phases = np.load('data/t_phases.npy', allow_pickle=True) #boundary times of phases in each HARP
 id_phases = np.load('data/id_phases.npy', allow_pickle=True) #ID code of phases in each HARP e.g. II, ID, DD, etc.
 
-harp = '3999' #specify which HARP to plot for
+harp = '5880' #specify which HARP to plot for
 h = np.where(harps==harp)[0][0] #get index of desired HARP
 
 fluxes_h = [flux[2] for flux in fluxes[h]] #0 for -ve, 1 for +ve, 2 for unsigned
@@ -114,7 +116,8 @@ plt.show()
 #--------------
 #Histogram of critical heights at CME onset
 
-cme_hc = np.load('data/cme_hc.npy', allow_pickle=True) #polarity separations for each HARP
+cme_hc = np.load('data/cme_hc.npy', allow_pickle=True) #
+cme_hc_stddev = np.load('data/cme_hc_stddev.npy', allow_pickle=True) #
 
 def round_down(num, divisor):
     return num - (num%divisor)
@@ -137,7 +140,8 @@ plt.show()
 
 print(f'Mean = {np.mean(cme_hc)} +/- {np.std(cme_hc)} Mm')
 print(f'Median = {np.median(cme_hc)} Mm')
-print(f'Min and Max = {np.min(cme_hc)}, {np.max(cme_hc)} Mm')
+
+print(f'Min and Max = {np.min(cme_hc)} +/- {cme_hc_stddev[np.argmin(cme_hc)]} Mm, {np.max(cme_hc)} +/- {cme_hc_stddev[np.argmax(cme_hc)]} Mm')
 
 #--------------
 #Mean critical height vs polarity separation
@@ -170,5 +174,5 @@ ax.set_ylabel(r'$\overline{h_{\mathdefault{c}}}$ (Mm)')
 ax.legend()
 plt.savefig('figures/hc_vs_d.eps', dpi=300, bbox_inches='tight', format='eps')
 plt.show()
-print(f'{fit_slope_bp}, offset = {round(p_bp[1],2)} $\pm$ {round(err_bp[1],2)}') #slope and error, y-offset and error
-print(f'{fit_slope_all}, offset = {round(p_all[1],2)} $\pm$ {round(err_all[1],2)}') #slope and error, y-offset and error
+print(f'bipolar {fit_slope_bp}, offset = {round(p_bp[1],2)} $\pm$ {round(err_bp[1],2)}') #slope and error, y-offset and error
+print(f'all {fit_slope_all}, offset = {round(p_all[1],2)} $\pm$ {round(err_all[1],2)}') #slope and error, y-offset and error
